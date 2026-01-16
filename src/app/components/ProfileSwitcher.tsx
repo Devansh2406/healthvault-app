@@ -28,6 +28,8 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 
+import { Badge } from '@/app/components/ui/badge';
+
 export function ProfileSwitcher() {
     const {
         profiles,
@@ -138,12 +140,26 @@ export function ProfileSwitcher() {
                     <DropdownMenuItem
                         onSelect={() => {
                             setIsManageOpen(true);
+                            handleOpenAdd();
+                        }}
+                        className="flex items-center gap-3 p-2 rounded-lg cursor-pointer text-teal-700 hover:bg-teal-50"
+                    >
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-dashed border-teal-200 bg-teal-50 text-teal-600">
+                            <Plus className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 font-medium text-sm">Add Family Member</div>
+                        <Badge className="bg-teal-100 text-teal-700 hover:bg-teal-100 border-teal-200 text-[10px] h-5 px-1.5">New</Badge>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                        onSelect={() => {
+                            setIsManageOpen(true);
                             setView('list');
                         }}
-                        className="p-2 justify-center font-medium text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg cursor-pointer"
+                        className="p-2 justify-center text-xs font-medium text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer mt-1"
                     >
-                        <Settings className="w-4 h-4 mr-2" />
-                        Manage Profiles
+                        <Settings className="w-3 h-3 mr-2" />
+                        Manage All Profiles
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

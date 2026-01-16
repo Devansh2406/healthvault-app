@@ -3,18 +3,21 @@ import { User, Bell, Plus, FileText, Activity, BookOpen, Pill, ChevronRight } fr
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { BottomNav } from '@/app/components/BottomNav';
+import { useApp } from '@/app/context/AppContext';
 import { ProfileSwitcher } from '@/app/components/ProfileSwitcher';
 import { useTranslation } from '@/app/hooks/useTranslation';
 
 export function HomeScreen() {
   const { t } = useTranslation();
+  const { activeProfile, reminders } = useApp();
+  const activeRemindersCount = reminders.filter(r => r.enabled).length;
 
   return (
     <div className="min-h-screen bg-[#f5f7fa] pb-20">
       <div className="bg-white px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm border-b border-gray-100">
         <div>
           <p className="text-xs text-gray-500 uppercase tracking-wide">Namaste,</p>
-          <h1 className="text-lg font-bold text-gray-900">{t('app_title')}</h1>
+          <h1 className="text-lg font-bold text-gray-900">{activeProfile?.name || t('app_title')}</h1>
         </div>
         <div className="flex items-center gap-2">
           <ProfileSwitcher />
@@ -57,7 +60,7 @@ export function HomeScreen() {
         <div>
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900">{t('reports')}</h2>
-            <p className="text-sm text-green-600">{t('upload_subtitle')}</p>
+            <p className="text-sm text-green-600">{t('upload_subtitle')} <span className="font-bold">{activeProfile?.name}</span></p>
           </div>
 
           {/* Main Grid */}
@@ -70,7 +73,7 @@ export function HomeScreen() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-white">{t('upload_report')}</h3>
-                  <p className="text-sm text-white/90 mt-1">{t('scan_report')}</p>
+                  <p className="text-sm text-white/90 mt-1">{t('scan_report')} ({activeProfile?.relation === 'Self' ? 'You' : activeProfile?.name})</p>
                 </div>
               </Card>
             </Link>
@@ -139,7 +142,7 @@ export function HomeScreen() {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-gray-900">{t('reminders')}</h3>
-                  <p className="text-xs text-green-600">{t('active')}</p>
+                  <p className="text-xs text-green-600">{activeRemindersCount} {t('active')}</p>
                 </div>
               </div>
               <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center">
