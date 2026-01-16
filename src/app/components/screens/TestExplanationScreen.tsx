@@ -4,12 +4,35 @@ import { Button } from '@/app/components/ui/button';
 import { Card, CardContent } from '@/app/components/ui/card';
 import { useApp } from '@/app/context/AppContext';
 
+const SAMPLE_REPORT = {
+  id: 'sample',
+  name: 'Diagnostic Test Library',
+  category: 'Medical Reference',
+  date: new Date().toISOString().split('T')[0],
+  analysis: "Welcome to the Diagnostic Test Library. \n\nThis section serves as a comprehensive guide to understanding various medical tests, their purposes, and what the results indicate. \n\nBrowse through common tests like Complete Blood Count (CBC), Lipid Profile, Thyroid Function Tests, and more to verify your understanding.",
+  summary: "This reference library helps patients understand medical reports better. Always consult a doctor for a professional diagnosis.",
+  keyFindings: [
+    "Complete Blood Count (CBC)",
+    "Lipid Profile (Cholesterol)",
+    "Thyroid Profile (T3, T4, TSH)",
+    "Blood Sugar (HbA1c)",
+    "Liver Function Test (LFT)"
+  ],
+  reviewed: true,
+  tags: ['Reference', 'Education']
+};
+
 export function TestExplanationScreen() {
   const navigate = useNavigate();
   const { testId } = useParams();
   const { reports, addReminder } = useApp();
 
-  const report = reports.find(r => r.id === testId);
+  let report = reports.find(r => r.id === testId);
+
+  // Fallback for Library Sample
+  if (!report && testId === 'sample') {
+    report = SAMPLE_REPORT as any;
+  }
 
   if (!report) {
     return (

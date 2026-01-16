@@ -110,6 +110,7 @@ interface AppContextType {
   reports: Report[];
   addReport: (report: Report) => Promise<void>;
   editReport: (id: string, updates: Partial<Report>) => void;
+  deleteReport: (id: string) => Promise<void>;
 
   reminders: Reminder[];
   toggleReminder: (id: string) => void;
@@ -355,6 +356,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const deleteReport = async (id: string) => {
+    const newReports = allReports.filter(r => r.id !== id);
+    setAllReports(newReports);
+
+    try {
+      const db = await initDB();
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      store.delete(id);
+    } catch (err) {
+      console.error("Failed to delete report from DB", err);
+    }
+  };
+
   // Reminder Actions
   const toggleReminder = (id: string) => {
     setAllReminders(allReminders.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
@@ -402,6 +417,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         reports, // Returns only filtered reports
         addReport,
         editReport,
+        deleteReport,
 
         reminders, // Returns only filtered reminders
         toggleReminder,

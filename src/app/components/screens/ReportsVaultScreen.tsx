@@ -15,7 +15,10 @@ import {
   AlertTriangle,
   ListFilter,
   Edit2,
-  Check
+  Check,
+  MoreVertical,
+  Pencil,
+  Trash
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format, isSameDay } from 'date-fns';
@@ -26,6 +29,12 @@ import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/app/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/app/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/app/components/ui/dropdown-menu';
 import { Calendar } from '@/app/components/ui/calendar';
 import { useApp } from '@/app/context/AppContext';
 import { BottomNav } from '@/app/components/BottomNav';
@@ -33,7 +42,7 @@ import { ProfileSwitcher } from '@/app/components/ProfileSwitcher';
 
 export function ReportsVaultScreen() {
   const navigate = useNavigate();
-  const { reports, editReport, vitals } = useApp();
+  const { reports, editReport, deleteReport, vitals } = useApp();
 
   // State
   const [searchQuery, setSearchQuery] = useState('');
@@ -138,19 +147,26 @@ export function ReportsVaultScreen() {
     editReport(id, { starred: !current });
   };
 
-  const openPreview = (report: any) => {
+  const openPreview = (report: any, startEditing = false) => {
     if (isSelectionMode) {
       toggleSelection(report.id);
       return;
     }
     setSelectedReport(report);
     setEditedTitle(report.name);
-    setIsEditingTitle(false);
+    setIsEditingTitle(startEditing);
     setIsPreviewOpen(true);
     setSummaryMode(false); // Reset summary mode
     // Mark as reviewed when opened
     if (!report.reviewed) {
       editReport(report.id, { reviewed: true });
+    }
+  };
+
+  const handleDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Are you sure you want to delete this report?')) {
+      deleteReport(id);
     }
   };
 
@@ -351,12 +367,12 @@ export function ReportsVaultScreen() {
                   const isSelected = selectedIds.includes(report.id);
 
                   return (
-                    <motion.button
+                    <motion.div
                       key={report.id}
                       onClick={() => openPreview(report)}
                       layoutId={report.id}
                       whileTap={{ scale: 0.98 }}
-                      className={`w-full text-left bg-white p-4 rounded-2xl shadow-sm border transition-all relative overflow-hidden group ${isSelected ? 'border-teal-500 ring-2 ring-teal-100' : 'border-gray-100 hover:shadow-md'
+                      className={`w-full text-left bg-white p-4 rounded-2xl shadow-sm border transition-all relative overflow-hidden group cursor-pointer ${isSelected ? 'border-teal-500 ring-2 ring-teal-100' : 'border-gray-100 hover:shadow-md'
                         }`}
                     >
                       {/* Selection Checkbox (Visible in Selection Mode) */}
@@ -379,15 +395,42 @@ export function ReportsVaultScreen() {
 
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start">
-                            <h4 className="font-bold text-gray-900 text-base truncate pr-8">{report.name}</h4>
-                            {/* Star Action */}
+                            <h4 className="font-bold text-gray-900 text-base truncate pr-2">{report.name}</h4>
+
+                            {/* Actions Area */}
                             {!isSelectionMode && (
-                              <div
-                                role="button"
-                                onClick={(e) => handleToggleStar(e, report.id, report.isStarred)}
-                                className={`p-1 rounded-full transition-colors ${report.isStarred ? 'text-yellow-400 bg-yellow-50' : 'text-gray-200 hover:text-gray-400'}`}
-                              >
-                                <Star className={`w-5 h-5 ${report.isStarred ? 'fill-current' : ''}`} />
+                              <div className="flex items-center gap-1 -mt-1 ml-2" onClick={e => e.stopPropagation()}>
+                                {/* Star Button */}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={`h-8 w-8 rounded-full ${report.isStarred ? 'text-yellow-400 bg-yellow-50' : 'text-gray-300 hover:text-gray-400 hover:bg-gray-50'}`}
+                                  onClick={(e) => handleToggleStar(e, report.id, report.isStarred)}
+                                >
+                                  <Star className={`w-4 h-4 ${report.isStarred ? 'fill-current' : ''}`} />
+                                </Button>
+
+                                {/* More Options Menu */}
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-300 hover:text-gray-600 hover:bg-gray-50 rounded-full">
+                                      <MoreVertical className="w-4 h-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="rounded-xl w-40">
+                                    <DropdownMenuItem onSelect={() => openPreview(report, true)}>
+                                      <Pencil className="w-4 h-4 mr-2" />
+                                      Rename
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                      onSelect={(e) => handleDelete(report.id, e as any)}
+                                    >
+                                      <Trash className="w-4 h-4 mr-2" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
                             )}
                           </div>
@@ -414,7 +457,7 @@ export function ReportsVaultScreen() {
                           )}
                         </div>
                       </div>
-                    </motion.button>
+                    </motion.div>
                   );
                 })}
               </div>
