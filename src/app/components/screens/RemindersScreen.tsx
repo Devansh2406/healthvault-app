@@ -44,7 +44,8 @@ export function RemindersScreen() {
   const [eventForm, setEventForm] = useState<Partial<CalendarEvent>>({
     type: 'appointment',
     status: 'upcoming',
-    date: format(new Date(), 'yyyy-MM-dd')
+    date: format(new Date(), 'yyyy-MM-dd'),
+    recurrence: 'none'
   });
 
   const selectedDateEvents = events.filter(event =>
@@ -83,7 +84,7 @@ export function RemindersScreen() {
   const handleSaveEvent = () => {
     if (!eventForm.title || !eventForm.date) return;
 
-    const eventData = {
+    const baseEventData = {
       id: editingEventId || Date.now().toString(),
       title: eventForm.title,
       type: eventForm.type || 'appointment',
@@ -92,13 +93,62 @@ export function RemindersScreen() {
       location: eventForm.location,
       notes: eventForm.notes,
       status: eventForm.status || 'upcoming',
-      linkedReportId: eventForm.linkedReportId
+      linkedReportId: eventForm.linkedReportId,
+      recurrence: eventForm.recurrence,
+      frequency: eventForm.frequency,
+      customTimes: eventForm.customTimes,
+      daysOfWeek: eventForm.daysOfWeek
     } as CalendarEvent;
 
+    // Handle Generation for Recurring Medication
+    if (eventForm.type === 'medication' && eventForm.recurrence !== 'none' && !editingEventId) {
+      const generatedEvents: CalendarEvent[] = [];
+      const startDate = parseISO(eventForm.date!);
+      const durationDays = 30; // Default schedule for 30 days
+
+      for (let i = 0; i < durationDays; i++) {
+        const currentDate = addDays(startDate, i);
+        const dateStr = format(currentDate, 'yyyy-MM-dd');
+
+        let shouldAdd = false;
+
+        if (eventForm.recurrence === 'daily') {
+          shouldAdd = true;
+        } else if (eventForm.recurrence === 'weekly' && eventForm.daysOfWeek?.includes(currentDate.getDay())) {
+          shouldAdd = true;
+        }
+
+        if (shouldAdd) {
+          // Handle Multiple Times a Day
+          if (eventForm.customTimes && eventForm.customTimes.length > 0) {
+            eventForm.customTimes.forEach((time, index) => {
+              generatedEvents.push({
+                ...baseEventData,
+                id: `${Date.now()}-${i}-${index}`,
+                date: dateStr,
+                time: time
+              });
+            });
+          } else {
+            generatedEvents.push({
+              ...baseEventData,
+              id: `${Date.now()}-${i}`,
+              date: dateStr
+            });
+          }
+        }
+      }
+
+      // Batch add (simulate by calling addEvent multiple times for now, ideally context should have addEvents)
+      generatedEvents.forEach(e => addEvent(e));
+      setIsDrawerOpen(false);
+      return;
+    }
+
     if (editingEventId) {
-      editEvent(editingEventId, eventData);
+      editEvent(editingEventId, baseEventData);
     } else {
-      addEvent(eventData);
+      addEvent(baseEventData);
     }
 
     setIsDrawerOpen(false);
@@ -311,6 +361,88 @@ export function RemindersScreen() {
                   </button>
                 ))}
               </div>
+
+              {/* Medication Frequency Options */}
+              {eventForm.type === 'medication' && (
+                <div className="space-y-4 animate-in slide-in-from-top-2 border border-blue-50 bg-blue-50/50 p-3 rounded-xl">
+                  <div className="space-y-2">
+                    <Label className="text-blue-700">Frequency</Label>
+                    <Select
+                      value={eventForm.recurrence || 'none'}
+                      onValueChange={(val: any) => setEventForm({ ...eventForm, recurrence: val })}
+                    >
+                      <SelectTrigger className="bg-white border-blue-200">
+                        <SelectValue placeholder="Select Frequency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Once Only</SelectItem>
+                        <SelectItem value="daily">Daily (for 30 days)</SelectItem>
+                        <SelectItem value="weekly">Weekly / Specific Days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Custom Days for Weekly */}
+                  {eventForm.recurrence === 'weekly' && (
+                    <div className="space-y-2">
+                      <Label className="text-blue-700">Select Days</Label>
+                      <div className="flex gap-2 justify-between">
+                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              const currentDays = eventForm.daysOfWeek || [];
+                              const newDays = currentDays.includes(idx)
+                                ? currentDays.filter(day => day !== idx)
+                                : [...currentDays, idx];
+                              setEventForm({ ...eventForm, daysOfWeek: newDays });
+                            }}
+                            className={`w-8 h-8 rounded-full text-xs font-bold transition-all ${eventForm.daysOfWeek?.includes(idx)
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white border text-gray-500 hover:bg-blue-50'
+                              }`}
+                          >
+                            {d}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Multiple Times Logic */}
+                  {(eventForm.recurrence === 'daily' || eventForm.recurrence === 'weekly') && (
+                    <div className="space-y-2">
+                      <Label className="text-blue-700">Times per Day</Label>
+                      <div className="grid grid-cols-1 gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={`justify-start ${!eventForm.customTimes?.length ? 'border-blue-500 bg-blue-100 text-blue-800' : 'bg-white'}`}
+                          onClick={() => setEventForm({ ...eventForm, customTimes: [] })} // Default uses main time
+                        >
+                          Once at {eventForm.time || 'selected time'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={`justify-start ${eventForm.customTimes?.length === 2 ? 'border-blue-500 bg-blue-100 text-blue-800' : 'bg-white'}`}
+                          onClick={() => setEventForm({ ...eventForm, customTimes: ['09:00', '21:00'] })}
+                        >
+                          Twice (Morning 9am, Night 9pm)
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={`justify-start ${eventForm.customTimes?.length === 3 ? 'border-blue-500 bg-blue-100 text-blue-800' : 'bg-white'}`}
+                          onClick={() => setEventForm({ ...eventForm, customTimes: ['09:00', '14:00', '21:00'] })}
+                        >
+                          3 Times (Morning, Afternoon, Night)
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

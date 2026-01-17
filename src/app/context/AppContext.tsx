@@ -79,6 +79,12 @@ export interface CalendarEvent {
   notes?: string;
   status: 'upcoming' | 'completed' | 'missed';
   linkedReportId?: string;
+  // Recurrence Fields
+  recurrence?: 'none' | 'daily' | 'weekly' | 'custom';
+  frequency?: string;
+  customTimes?: string[];
+  daysOfWeek?: number[]; // 0-6 for Sun-Sat
+  endDate?: string;
 }
 
 export interface HealthMetric {
