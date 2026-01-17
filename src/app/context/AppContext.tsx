@@ -23,7 +23,7 @@ const initDB = (): Promise<IDBDatabase> => {
   });
 };
 
-interface User {
+export interface User {
   name?: string;
   phoneNumber?: string;
   age?: number;
@@ -41,7 +41,7 @@ export interface Profile {
   themeColor?: string; // Optional for UI distinction
 }
 
-interface Report {
+export interface Report {
   id: string;
   profileId?: string; // Added for Family Profile
   name: string;
@@ -58,7 +58,7 @@ interface Report {
   notes?: string;
 }
 
-interface Reminder {
+export interface Reminder {
   id: string;
   profileId?: string; // Added for Family Profile
   testName: string;

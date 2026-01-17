@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User as UserIcon,
@@ -36,9 +36,17 @@ import {
   DropdownMenuTrigger
 } from '@/app/components/ui/dropdown-menu';
 import { Calendar } from '@/app/components/ui/calendar';
-import { useApp } from '@/app/context/AppContext';
+import { useApp, Report } from '@/app/context/AppContext';
 import { BottomNav } from '@/app/components/BottomNav';
 import { ProfileSwitcher } from '@/app/components/ProfileSwitcher';
+
+// Local type extending Report with processed fields
+type ProcessedReport = Report & {
+  displayTags: string[];
+  dateObj: Date;
+  isStarred: boolean;
+  isReviewed: boolean;
+};
 
 export function ReportsVaultScreen() {
   const navigate = useNavigate();
@@ -49,10 +57,24 @@ export function ReportsVaultScreen() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [showStarredOnly, setShowStarredOnly] = useState(false);
   const [showUnreviewedOnly, setShowUnreviewedOnly] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<any | null>(null);
+  const [selectedReport, setSelectedReport] = useState<ProcessedReport | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
+
+
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // Effect to manage file preview URL
+  useEffect(() => {
+    if (selectedReport?.file) {
+      const url = URL.createObjectURL(selectedReport.file);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [selectedReport]);
 
   // New Features State
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -147,7 +169,7 @@ export function ReportsVaultScreen() {
     editReport(id, { starred: !current });
   };
 
-  const openPreview = (report: any, startEditing = false) => {
+  const openPreview = (report: ProcessedReport, startEditing = false) => {
     if (isSelectionMode) {
       toggleSelection(report.id);
       return;
@@ -173,7 +195,7 @@ export function ReportsVaultScreen() {
   const handleSaveTitle = () => {
     if (selectedReport && editedTitle.trim()) {
       editReport(selectedReport.id, { name: editedTitle });
-      setSelectedReport(prev => ({ ...prev, name: editedTitle }));
+      setSelectedReport(prev => prev ? { ...prev, name: editedTitle } : null);
       setIsEditingTitle(false);
     }
   };
@@ -688,10 +710,53 @@ export function ReportsVaultScreen() {
                     </div>
 
                     {/* File Preview Mock */}
-                    <div className="aspect-[3/4] bg-gray-200 rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-gray-300">
-                      <FileText className="w-12 h-12 text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-500 font-medium">Document Preview</p>
-                      <Button variant="link" className="text-teal-600">Download PDF</Button>
+                    {/* File Preview */}
+                    <div className="bg-gray-100 rounded-xl overflow-hidden border border-gray-200 min-h-[300px] flex flex-col relative group">
+                      {previewUrl ? (
+                        <>
+                          {selectedReport.file?.type.includes('image') ? (
+                            <img
+                              src={previewUrl}
+                              alt="Report Preview"
+                              className="w-full h-auto object-contain max-h-[500px]"
+                            />
+                          ) : selectedReport.file?.type.includes('pdf') ? (
+                            <div className="w-full h-[500px]">
+                              <iframe
+                                src={previewUrl}
+                                title="PDF Preview"
+                                className="w-full h-full"
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center p-10 h-full">
+                              <FileText className="w-16 h-16 text-gray-400 mb-4" />
+                              <p className="text-gray-500 font-medium">Preview not available for this file type.</p>
+                              <p className="text-xs text-gray-400 mt-1">({selectedReport.file?.type || 'Unknown Type'})</p>
+                            </div>
+                          )}
+
+                          {/* Download Button Overlay */}
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                            <a
+                              href={previewUrl}
+                              download={selectedReport.name}
+                              className="pointer-events-auto bg-white text-gray-900 px-6 py-2 rounded-full font-bold shadow-lg hover:bg-gray-100 transition-colors flex items-center gap-2"
+                            >
+                              <FileText className="w-4 h-4" />
+                              Download File
+                            </a>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full p-10 text-center">
+                          <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                            <FileText className="w-8 h-8 text-gray-400" />
+                          </div>
+                          <p className="text-gray-600 font-medium">No file attached</p>
+                          <p className="text-sm text-gray-400 mt-1">This record was created without a document.</p>
+                        </div>
+                      )}
                     </div>
                   </>
                 )}
