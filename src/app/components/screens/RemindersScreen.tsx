@@ -220,7 +220,7 @@ export function RemindersScreen() {
                           </h3>
                           <div
                             onClick={(e) => handleToggleStatus(e, event)}
-                            className="p-2 -mr-3 rounded-full hover:bg-gray-100 transition-colors cursor-pointer z-10"
+                            className="p-2 -mr-3 rounded-full hover:bg-gray-100 transition-colors cursor-pointer relative z-20"
                             role="button"
                             tabIndex={0}
                           >
