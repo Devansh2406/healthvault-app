@@ -139,6 +139,12 @@ export function RemindersScreen() {
     }
   };
 
+  const handleToggleStatus = (e: React.MouseEvent, event: CalendarEvent) => {
+    e.stopPropagation();
+    const newStatus = event.status === 'completed' ? 'upcoming' : 'completed';
+    editEvent(event.id, { status: newStatus });
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans">
       {/* Header */}
@@ -212,7 +218,12 @@ export function RemindersScreen() {
                           <h3 className={`font-bold text-gray-900 ${event.status === 'completed' ? 'line-through text-gray-400' : ''}`}>
                             {event.title}
                           </h3>
-                          {getStatusIcon(event.status)}
+                          <button
+                            onClick={(e) => handleToggleStatus(e, event)}
+                            className="p-1 -mr-2 rounded-full hover:bg-gray-100 transition-colors"
+                          >
+                            {getStatusIcon(event.status)}
+                          </button>
                         </div>
 
                         {event.location && (
@@ -285,8 +296,8 @@ export function RemindersScreen() {
                     key={t}
                     onClick={() => setEventForm({ ...eventForm, type: t as any })}
                     className={`p-2 rounded-lg border text-sm capitalize flex flex-col items-center gap-1 transition-all ${eventForm.type === t
-                        ? 'bg-teal-50 border-teal-500 text-teal-700 font-medium'
-                        : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                      ? 'bg-teal-50 border-teal-500 text-teal-700 font-medium'
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                       }`}
                   >
                     {getTypeIcon(t)}
