@@ -218,14 +218,14 @@ export function RemindersScreen() {
                           <h3 className={`font-bold text-gray-900 ${event.status === 'completed' ? 'line-through text-gray-400' : ''}`}>
                             {event.title}
                           </h3>
-                          <div
+                          <button
+                            type="button"
                             onClick={(e) => handleToggleStatus(e, event)}
-                            className="p-2 -mr-3 rounded-full hover:bg-gray-100 transition-colors cursor-pointer relative z-20"
-                            role="button"
-                            tabIndex={0}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            className="p-2 -mr-3 rounded-full hover:bg-gray-100 transition-colors cursor-pointer relative z-50"
                           >
                             {getStatusIcon(event.status)}
-                          </div>
+                          </button>
                         </div>
 
                         {event.location && (
