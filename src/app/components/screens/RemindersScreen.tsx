@@ -202,10 +202,15 @@ export function RemindersScreen() {
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <Card
-                    className="border-none shadow-sm bg-white rounded-2xl overflow-hidden cursor-pointer active:scale-95 transition-transform"
-                    onClick={() => openEditEvent(event)}
+                    className="border-none shadow-sm bg-white rounded-2xl overflow-hidden active:scale-95 transition-transform relative group"
                   >
-                    <CardContent className="p-4 flex gap-4">
+                    {/* Click Overlay for Edit Mode */}
+                    <div
+                      onClick={() => openEditEvent(event)}
+                      className="absolute inset-0 z-10 cursor-pointer"
+                    />
+
+                    <CardContent className="p-4 flex gap-4 relative">
                       {/* Time Column */}
                       <div className="flex flex-col items-center justify-center min-w-[3rem] border-r border-gray-100 pr-4">
                         <span className="text-sm font-bold text-gray-900">{event.time || '--:--'}</span>
@@ -221,8 +226,7 @@ export function RemindersScreen() {
                           <button
                             type="button"
                             onClick={(e) => handleToggleStatus(e, event)}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            className="p-2 -mr-3 rounded-full hover:bg-gray-100 transition-colors cursor-pointer relative z-50"
+                            className="p-2 -mr-3 rounded-full hover:bg-gray-100 transition-colors cursor-pointer relative z-20"
                           >
                             {getStatusIcon(event.status)}
                           </button>
